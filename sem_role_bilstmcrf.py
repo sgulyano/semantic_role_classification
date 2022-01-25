@@ -374,6 +374,7 @@ else:
 # Prediction on validation data
 print('\nPrediction of validation data started ...')
 pred_model = model.predict([X_word_te,np.array(X_char_te).reshape((len(X_char_te),max_len, max_len_char))], verbose=1)
+print('Prediction of validation data completed ...\n')
 
 y_pred = []
 y_true = []

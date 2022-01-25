@@ -7,3 +7,6 @@ raw/
 model/
 svm/
 frame_model/
+bilstm_crf/
+bert/
+wangchan/
