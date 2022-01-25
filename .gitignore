@@ -1,0 +1,9 @@
+annotate_example.json
+
+.ipynb_checkpoints/
+__pycache__/
+
+raw/
+model/
+svm/
+frame_model/
