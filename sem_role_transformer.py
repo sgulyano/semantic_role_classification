@@ -71,7 +71,16 @@ tokenized_datasets = datasets.map(lambda x: tokenize_and_align_labels(x, tokeniz
 print (f"Tokenization completed ...\n")
 
 # Load pretrained model
-model = AutoModelForTokenClassification.from_pretrained(model_checkpoint, num_labels=len(label_list))
+model_filepath = MODEL_PATH + MODEL_NAME
+if os.path.isdir(model_filepath):
+    # Load Model
+    print (f"\nTrained Model exists, Load model from {model_filepath}.")
+    # retreive the saved model 
+    model = AutoModelForTokenClassification.from_pretrained(model_filepath, local_files_only=True)
+    model.to('cuda')
+    print(f'Load Trained Model from {model_filepath} completed ...\n')
+else:
+    model = AutoModelForTokenClassification.from_pretrained(model_checkpoint, num_labels=len(label_list))
 
 # Config model
 args = TrainingArguments(
@@ -105,14 +114,7 @@ trainer = Trainer(
 )
 
 model_filepath = MODEL_PATH + MODEL_NAME
-if os.path.isfile(model_filepath):
-    # Load Model
-    print (f"\nTrained Model exists, Load model from {model_filepath}.")
-    # retreive the saved model 
-    trainer = AutoModelForTokenClassification.from_pretrained(model_filepath, local_files_only=True)
-    trainer.to('cuda')
-    print(f'Load Trained Model from {model_filepath} completed ...\n')
-else:
+if not os.path.isdir(model_filepath):
     print('Training Model started ...')
     trainer.train()
     print('Training Model completed ...')

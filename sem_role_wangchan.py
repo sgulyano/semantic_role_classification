@@ -5,7 +5,7 @@ import os
 
 # Hugging Face library
 from datasets import load_dataset, load_metric
-from transformers import AutoTokenizer, AutoModelForMaskedLM, TrainingArguments, Trainer, DataCollatorForTokenClassification
+from transformers import AutoTokenizer, AutoModelForTokenClassification, TrainingArguments, Trainer, DataCollatorForTokenClassification
 
 # Transformers Utility
 from transformers_utils import tokenize_and_align_labels, compute_metrics
@@ -54,11 +54,6 @@ datasets = load_dataset("semrolebank", CONFIG_NAME)
 print('Dataset : ', datasets)
 print('Sample  : ', datasets['validation'][0]['tokens'])
 
-# Sanity check : There must be no empty tokens.
-for s in datasets['validation']:
-    for w in s['tokens']:
-        if w == '':
-            raise Exception('Word token is empty')
 
 
 label_list = datasets["train"].features["role_tags"].feature.names
@@ -71,7 +66,16 @@ tokenized_datasets = datasets.map(lambda x: tokenize_and_align_labels(x, tokeniz
 print (f"Tokenization completed ...\n")
 
 # Load pretrained model
-model = AutoModelForMaskedLM.from_pretrained(model_checkpoint, num_labels=len(label_list))
+model_filepath = MODEL_PATH + MODEL_NAME
+if os.path.isdir(model_filepath):
+    # Load Model
+    print (f"\nTrained Model exists, Load model from {model_filepath}.")
+    # retreive the saved model 
+    model = AutoModelForTokenClassification.from_pretrained(model_filepath, local_files_only=True)
+    model.to('cuda')
+    print(f'Load Trained Model from {model_filepath} completed ...\n')
+else:
+    model = AutoModelForTokenClassification.from_pretrained(model_checkpoint, num_labels=len(label_list))
 
 # Config model
 args = TrainingArguments(
@@ -82,12 +86,11 @@ args = TrainingArguments(
     learning_rate=2e-5,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
-    num_train_epochs=3,
+    num_train_epochs=4,
     weight_decay=0.01,
     save_total_limit=5,
     load_best_model_at_end=True,
-    metric_for_best_model='eval_loss',
-    eval_accumulation_steps=16
+    metric_for_best_model='eval_loss'
 )
 
 # Define data collator (for padding sentences)
@@ -106,15 +109,7 @@ trainer = Trainer(
     compute_metrics=lambda x: compute_metrics(x, metric, label_list)
 )
 
-model_filepath = MODEL_PATH + MODEL_NAME
-if os.path.isfile(model_filepath):
-    # Load Model
-    print (f"\nTrained Model exists, Load model from {model_filepath}.")
-    # retreive the saved model 
-    trainer = AutoModelForMaskedLM.from_pretrained(model_filepath, local_files_only=True)
-    trainer.to('cuda')
-    print(f'Load Trained Model from {model_filepath} completed ...\n')
-else:
+if not os.path.isdir(model_filepath):
     print('Training Model started ...')
     trainer.train()
     print('Training Model completed ...')
