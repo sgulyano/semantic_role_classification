@@ -10,7 +10,9 @@ def ner_classification_report(y_true, y_pred):
     y_true_combined = lb.fit_transform(list(chain.from_iterable(y_true)))
     y_pred_combined = lb.transform(list(chain.from_iterable(y_pred)))
     tagset = list(sorted(set(lb.classes_)))
-    tagset = tagset[:-1]
+    for v in ['pad', 'Z-O', 'Verb']:
+        if v in tagset:
+            tagset.remove(v)
     print(tagset)
     class_indices = {cls: idx for idx, cls in enumerate(lb.classes_)}
     
